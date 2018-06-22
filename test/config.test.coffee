@@ -23,7 +23,7 @@ expectInvalid = (cfg) ->
       throw new Error 'Config should not have been valid'
 
 # Tests
-describe "wait-for-postgres' config module", ->
+describe "wait-for-mssql' config module", ->
   it "should permit an null config", -> expectValid null
   it "should permit an undefined config", -> expectValid undefined
 
@@ -36,4 +36,3 @@ describe "wait-for-postgres' config module", ->
   it "should allow a host of 'a'", -> expectValid {host: 'a'}
   it "should not allow a null host", -> expectInvalid {host: null}
   it "should not allow an empty host of", -> expectInvalid {host: ''}
-

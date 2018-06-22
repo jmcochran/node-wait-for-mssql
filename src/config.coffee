@@ -3,14 +3,13 @@ Joi = require 'joi'
 
 defaultConfig = ->
   host: 'localhost'
-  port: 5432
-  username: 'postgres'
+  port: 1433
+  username: 'sa'
   password: ''
-  database: 'postgres'
-  connectTimeout: 250
+  database: 'master'
+  connectTimeout: 2000
   totalTimeout: 15000
   query: null
-  quiet: false
 
 defaults = defaultConfig()
 
@@ -23,7 +22,6 @@ schema = Joi.object().keys
   connectTimeout: Joi.number().integer().min(0).optional().default(defaults.connectTimeout)
   totalTimeout: Joi.number().integer().min(0).optional().default(defaults.totalTimeout)
   query: Joi.string().min(1).optional().default(defaults.query)
-  quiet: Joi.boolean().optional().default(defaults.quiet)
 
 verify = P.promisify Joi.validate
 validate = (config) -> verify(config ? {}, schema)
@@ -31,4 +29,3 @@ validate = (config) -> verify(config ? {}, schema)
 module.exports =
   validate: validate
   default: defaultConfig
-

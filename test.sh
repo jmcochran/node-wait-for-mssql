@@ -2,40 +2,40 @@
 
 set -x
 
-IMAGE_ID="postgres:9.5.3"
-CONTAINER_NAME="pg-query-runner"
+IMAGE_ID="microsoft/mssql-server-linux:2017-GA"
+CONTAINER_NAME="mssql-query-runner"
 SQL_FILE="test-queries.sql"
-PG_USERNAME="test"
-PG_PASSWORD="test"
-PG_DATABASE="test"
+MSSQL_USERNAME="sa"
+MSSQL_PASSWORD="testTEST123"
+MSSQL_DATABASE="master"
 
 docker kill $CONTAINER_NAME
 docker rm $CONTAINER_NAME
 
 docker run \
-  -e POSTGRES_USER=$PG_USERNAME \
-  -e POSTGRES_PASSWORD=$PG_PASSWORD \
-  -e POSTGRES_DB=$PG_DATABASE \
+  -e ACCEPT_EULA=Y \
+  -e MSSQL_SA_PASSWORD=$MSSQL_PASSWORD \
+  -p 1433:1433 \
   --name=$CONTAINER_NAME \
-  -P -d $IMAGE_ID
+  -d $IMAGE_ID
 
-PG_HOST=`docker inspect -f '{{ .NetworkSettings.IPAddress }}' ${CONTAINER_NAME}`
-PG_PORT=5432
+MSSQL_HOST=localhost
+MSSQL_PORT=1433
 
-echo "host: ${PG_HOST}"
-echo "port: ${PG_PORT}"
-echo "user: ${PG_USERNAME}"
-echo "pass: ${PG_PASSWORD}"
-echo "  db: ${PG_DATABASE}"
+echo "host: ${MSSQL_HOST}"
+echo "port: ${MSSQL_PORT}"
+echo "user: ${MSSQL_USERNAME}"
+echo "pass: ${MSSQL_PASSWORD}"
+echo "  db: ${MSSQL_DATABASE}"
 
 coffee src/index.coffee \
   --query="SELECT 1" \
-  --host=$PG_HOST \
-  --port=$PG_PORT \
-  --username=$PG_USERNAME \
-  --password=$PG_PASSWORD \
-  --database=$PG_DATABASE \
-  --connect-timeout=333 \
+  --host=$MSSQL_HOST \
+  --port=$MSSQL_PORT \
+  --username=$MSSQL_USERNAME \
+  --password=$MSSQL_PASSWORD \
+  --database=$MSSQL_DATABASE \
+  --connect-timeout=5000 \
   --total-timeout=30000
 
 docker kill $CONTAINER_NAME

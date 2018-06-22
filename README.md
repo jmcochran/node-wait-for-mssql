@@ -1,15 +1,15 @@
 
-Wait for Postgres
+Wait for MSSQL
 ===========
 
-Waits for a PostgreSQL connection to become available, optionally running
+Waits for a MSSQL connection to become available, optionally running
 a custom query to determine if the connection is valid.
 
 Installation
 ============
 
 ```bash
-npm install --save wait-for-postgres
+npm install --save wait-for-mssql
 ```
 
 Usage
@@ -18,25 +18,23 @@ Usage
 Run as a module within another script:
 
 ```coffeescript
-waitForPg = require 'wait-for-postgres'
+waitForMSSQL = require 'wait-for-mssql'
 config =
   username: user
   password: pass
-  quiet: true
   query: 'SELECT 1'
 
-waitForPg.wait(config)
+waitForMSSQL.await(config)
 ```
       
 
 Or run stand-alone
 
 ```bash
-wait-for-postgres --username=user --password=pass --quiet
+wait-for-mssql --username=user --password=pass --quiet
 ```
 
 Building
 ============
 
 cake build
-

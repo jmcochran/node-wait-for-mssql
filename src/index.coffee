@@ -1,40 +1,35 @@
 P = require 'bluebird'
-pg = require 'pg'
+mssql = require 'mssql'
 program = require 'commander'
 durations = require 'durations'
 
 config = require './config'
 
-getConnection = (uri, connectTimeout) ->
-  new P (resolve, reject) ->
-    client = new pg.Client uri
-    client.connect (error) ->
-      if error? then reject error else resolve client
+getConnection = (cfg, connectTimeout) ->
+  client = P.resolve(mssql.connect cfg)
   .timeout connectTimeout
+  .then (client) -> client
   .catch (error) ->
-    client.end()
+    mssql.close()
     throw error
 
-# Generate the connection URI
-makeUri = (cfg, pass) ->
-  { username, password, host, port, database, } = cfg
-  pass = pass ? password
-
-  "postgres://#{username}:#{pass}@#{host}:#{port}/#{database}"
-
-# Wait for Postgres to become available
-waitForPostgres = (partialConfig) ->
+# Wait for MSSQL to become available
+waitForMSSQL = (partialConfig) ->
   config.validate partialConfig
   .then (cfg) ->
     new P (resolve) ->
       {
         username, password, host, port, database,
-        connectTimeout, totalTimeout, quiet, query
+        connectTimeout, totalTimeout, query,
       } = cfg
 
-      uri = makeUri cfg
-      masked = makeUri cfg, '***'
-      console.log "URI: #{masked}"
+      clientConfig =
+        user : username
+        password : password
+        server : host
+        port : port
+        database : database
+        connectionTimeout : connectTimeout
 
       watch = durations.stopwatch().start()
       connectWatch = durations.stopwatch()
@@ -47,7 +42,7 @@ waitForPostgres = (partialConfig) ->
         connectWatch.reset().start()
 
         # Establish a client connection
-        getConnection uri, connectTimeout
+        getConnection clientConfig, connectTimeout
 
         # Run the test query with the connected client
         .then (client) ->
@@ -56,13 +51,13 @@ waitForPostgres = (partialConfig) ->
           # If a query was supplied, it must succeed before reporting success
           if query?
             console.log "Connected. Running test query: '#{query}'"
-            client.query query, (error, result) ->
+            client.request().query query, (error, result) ->
               console.log "Query done."
-              client.end()
+              client.close()
               if (error)
-                console.log "[#{error}] Attempt #{attempts} query failure. Time elapsed: #{watch}" if not quiet
+                console.log "[#{error}] Attempt #{attempts} query failure. Time elapsed: #{watch}" 
                 if watch.duration().millis() > totalTimeout
-                  console.log "Postgres test query failed." if not quiet
+                  console.log "MSSQL test query failed." 
                   resolve 1
                 else
                   totalRemaining = Math.min connectTimeout, Math.max(0, totalTimeout - watch.duration().millis())
@@ -76,15 +71,15 @@ waitForPostgres = (partialConfig) ->
           else
             watch.stop()
             console.log "Connected after #{attempts} attempt(s) over #{watch}"
-            client.end()
+            client.close()
             resolve 0
 
         # Handle connection failure
         .catch (error) ->
           connectWatch.stop()
-          console.log "[#{error}] Attempt #{attempts} timed out. Time elapsed: #{watch}" if not quiet
+          console.log "[#{error}] Attempt #{attempts} timed out. Time elapsed: #{watch}" 
           if watch.duration().millis() > totalTimeout
-            console.log "Could not connect to Postgres." if not quiet
+            console.log "Could not connect to MSSQL." 
             resolve 1
           else
             totalRemaining = Math.min connectTimeout, Math.max(0, totalTimeout - watch.duration().millis())
@@ -97,15 +92,14 @@ waitForPostgres = (partialConfig) ->
 # Script was run directly
 runScript = () ->
   program
-    .option '-D, --database <database>', 'Postgres database name (default is postgres)'
-    .option '-h, --host <host>', 'Postgres hostname (default is localhost)'
-    .option '-p, --port <port>', 'Postgres port (default is 5432)', parseInt
-    .option '-P, --password <password>', 'Postgres user password (default is empty)'
-    .option '-q, --quiet', 'Silence non-error output (default is false)'
+    .option '-D, --database <database>', 'MSSQL database name (default is master)'
+    .option '-h, --host <host>', 'MSSQL hostname (default is localhost)'
+    .option '-p, --port <port>', 'MSSQL port (default is 1433)', parseInt
+    .option '-P, --password <password>', 'MSSQL user password (default is empty)'
     .option '-Q, --query <query_string>', 'Custom query to confirm database state'
-    .option '-t, --connect-timeout <connect-timeout>', 'Individual connection attempt timeout (default is 250)', parseInt
+    .option '-t, --connect-timeout <connect-timeout>', 'Individual connection attempt timeout (default is 1000)', parseInt
     .option '-T, --total-timeout <total-timeout>', 'Total timeout across all connect attempts (dfault is 15000)', parseInt
-    .option '-u, --username <username>', 'Posgres user name (default is postgres)'
+    .option '-u, --username <username>', 'MSSAQL user name (default is sa)'
     .parse(process.argv)
 
   partialConfig =
@@ -117,15 +111,14 @@ runScript = () ->
     connectTimeout: program.connectTimeout
     totalTimeout: program.totalTimeout
     query: program.query
-    quiet: program.quiet
 
-  waitForPostgres(partialConfig)
+  waitForMSSQL(partialConfig)
   .then (code) ->
     process.exit code
 
 # Module
 module.exports =
-  await: waitForPostgres
+  await: waitForMSSQL
   run: runScript
 
 # If run directly
