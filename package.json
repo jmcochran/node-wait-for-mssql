@@ -1,6 +1,6 @@
 {
   "name": "wait-for-mssql",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Wait for a MSSQL connection to become available",
   "keywords": [
     "MSSQL",
