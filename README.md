@@ -31,7 +31,7 @@ waitForMSSQL.await(config)
 Or run stand-alone
 
 ```bash
-wait-for-mssql --username=user --password=pass --quiet
+wait-for-mssql --username=user --password=pass
 ```
 
 Building
