@@ -30,6 +30,7 @@ waitForMSSQL = (partialConfig) ->
         port : port
         database : database
         connectionTimeout : connectTimeout
+        totalTimeout : totalTimeout
 
       watch = durations.stopwatch().start()
       connectWatch = durations.stopwatch()
