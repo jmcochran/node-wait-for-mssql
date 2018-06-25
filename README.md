@@ -24,7 +24,7 @@ config =
   password: pass
   query: 'SELECT 1'
 
-waitForMSSQL.await(config)
+waitForMSSQL.wait(config)
 ```
       
 

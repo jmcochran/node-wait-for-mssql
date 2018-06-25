@@ -119,7 +119,7 @@ runScript = () ->
 
 # Module
 module.exports =
-  await: waitForMSSQL
+  wait: waitForMSSQL
   run: runScript
 
 # If run directly
